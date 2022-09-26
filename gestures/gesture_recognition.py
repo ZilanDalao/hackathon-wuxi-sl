@@ -41,6 +41,11 @@ class GestureRecognition:
             min_detection_confidence=self.min_detection_confidence,
             min_tracking_confidence=self.min_tracking_confidence,
         )
+        # mp_holistic = mp.solutions.holistic
+        # hands = mp_holistic.Holistic(
+        #     min_detection_confidence=self.min_detection_confidence,
+        #     min_tracking_confidence=self.min_tracking_confidence,
+        # )
 
         keypoint_classifier = KeyPointClassifier()
         point_history_classifier = PointHistoryClassifier()
@@ -148,10 +153,10 @@ class GestureRecognition:
         return image
 
     def draw_info(self, image, fps, mode, number):
-        cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX,
-                   1.0, (0, 0, 0), 4, cv.LINE_AA)
-        cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX,
-                   1.0, (255, 255, 255), 2, cv.LINE_AA)
+        # cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX,
+        #            1.0, (0, 0, 0), 4, cv.LINE_AA)
+        # cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX,
+        #            1.0, (255, 255, 255), 2, cv.LINE_AA)
 
         mode_string = ['Logging Key Point', 'Logging Point History']
         if 1 <= mode <= 2:
@@ -474,6 +479,9 @@ class GestureRecognition:
                          (0, 0, 0), 1)
 
         return image
+
+    def get_hand_sign_text(self,gesture_id):
+        return self.keypoint_classifier_labels[gesture_id]
 
 
 class GestureBuffer:

@@ -1,10 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import configargparse
-
 import cv2 as cv
 from utils import CvFpsCalc
 from gestures import *
+
+import threading
+from collections import deque, Counter
+import pyttsx3
+import time
+import nltk
 
 def get_args():
     print('## Reading configuration ##')
@@ -39,16 +44,41 @@ def select_mode(key, mode):
         mode = 1
     return number, mode
 
+# use a fixed-length deque to record the gestures and return 1 with highest-freq
+def words2Voice(deq,pp):
+    last_word = ''
+    verb_list = ['VB','VBD','VBN','IN']
+    while True:
+        curr_word = Counter(list(deq)).most_common(1)[0][0]
+        if curr_word != last_word:
+            if curr_word == 'it/it\'s':
+                if nltk.pos_tag([last_word])[0][1] in verb_list:
+                    curr_word = 'it'
+                else:
+                    curr_word = 'it\'s'
+            pp.say(curr_word)
+            last_word = curr_word
+            pp.runAndWait()
+        time.sleep(0.6)
+
+
 
 def main():
     # init global vars
     global gesture_buffer
     global gesture_id
 
+    # about 30fps, which means 30 gestures in each sec
+    deq = deque(maxlen=15)
+    deq.append('')
+
     # Argument parsing
     args = get_args()
     WRITE_CONTROL = False
     in_flight = False
+
+    # init text-to-voice func
+    pp = pyttsx3.init()
 
     cap = cv.VideoCapture(0)
 
@@ -63,6 +93,11 @@ def main():
     mode = 0
     number = -1
 
+    # start the thread of word-to-voice
+    t = threading.Thread(target=words2Voice,args=(deq, pp), daemon=True)
+    t.start()
+
+    count=0
     while True:
         success, image2 = cap.read()
         fps = cv_fps_calc.get()
@@ -91,8 +126,16 @@ def main():
 
         cv.imshow('Sign Language', debug_image)
 
-    cv.destroyAllWindows()
+        # index -1 will return the last element in the arr
+        if gesture_id!=-1:
+            curr_words = gesture_detector.get_hand_sign_text(gesture_id)
+            deq.append(curr_words)
+        else:
+            # append empty when no sign detected
+            deq.append("")
 
+
+    cv.destroyAllWindows()
 
 if __name__ == '__main__':
     main()
